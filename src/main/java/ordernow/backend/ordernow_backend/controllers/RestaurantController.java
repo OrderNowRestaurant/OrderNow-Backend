@@ -1,5 +1,7 @@
 package ordernow.backend.ordernow_backend.controllers;
 
+import java.util.Optional;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,8 +18,13 @@ public class RestaurantController {
         this.restaurantService = restaurantService;
     }
     
-    @PostMapping("/restaurant/register")
+    /*@PostMapping("/restaurant/register")
     public Restaurant createRestaurant(@RequestBody Restaurant restaurant) {
         return this.restaurantService.save(restaurant);
     }
+    
+    @PostMapping("/restaurant/login")
+    public Restaurant logiRestaurant(@RequestBody Optional<Restaurant> restaurant) throws Exception {
+        return this.restaurantService.checkRestaurant(restaurant);
+    }*/
 }

@@ -2,8 +2,11 @@ package ordernow.backend.ordernow_backend.entities;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,9 +29,6 @@ public class Restaurant {
     @Column(name = "name")
     public String name;
 
-    @Column(name = "password")
-    private String password;
-
     @Column(name = "created_at")
     public LocalDateTime created_at;
 
@@ -37,17 +37,12 @@ public class Restaurant {
     public Collection<ServiceTable> serviceTableList;
 
 
-    public Restaurant(String name, String password) {
+    public Restaurant(String name) {
         this.name = name;
-        this.password = password;
         this.created_at = LocalDateTime.now();
     }
 
-    public String getPassword() {
-        return this.password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public Long getIdRestaurant() {
+        return idRestaurant;
     }
 }

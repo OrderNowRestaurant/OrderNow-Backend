@@ -1,5 +1,7 @@
 package ordernow.backend.ordernow_backend.services;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,13 +21,12 @@ public class RestaurantService {
     }
 
     public Restaurant save(Restaurant restaurant) {
-        restaurant.setPassword(getEncryptedPassword(restaurant.getPassword()));
+        //restaurant.setPassword(getEncryptedPassword(restaurant.getPassword()));
 
         return restaurantRepository.save(restaurant);
     }
 
-    public String getEncryptedPassword(String password) {
+    //public Restaurant checkRestaurant(Optional<Restaurant> restaurant) throws Exception {}
 
-        return this.passwordEncoder.encode(password);
-    }
+    //public String getEncryptedPassword(String password) {return this.passwordEncoder.encode(password); }
 }
