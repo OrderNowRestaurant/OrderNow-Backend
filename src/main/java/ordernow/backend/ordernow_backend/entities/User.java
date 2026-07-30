@@ -14,6 +14,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -34,8 +36,13 @@ public class User implements UserDetails {
     @Column(name = "created_at")
     public LocalDateTime created_at;
 
-    @Column(name = "id_role")
-    public Integer idRole;
+    @ManyToOne
+    @JoinColumn(name = "id_role")
+    public Role role;
+
+    @ManyToOne
+    @JoinColumn(name = "id_restaurant")
+    public Restaurant restaurant;
 
     public User(String username, String password) {
         this.username = username;
@@ -66,6 +73,6 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_RESTAURANT"));
+        return List.of(new SimpleGrantedAuthority("USER"));
     }
 }

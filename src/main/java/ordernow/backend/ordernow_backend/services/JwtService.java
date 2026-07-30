@@ -1,6 +1,6 @@
 package ordernow.backend.ordernow_backend.services;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +12,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import ordernow.backend.ordernow_backend.entities.Restaurant;
 import ordernow.backend.ordernow_backend.entities.User;
 import ordernow.backend.ordernow_backend.services.JwtService;;
 
@@ -24,8 +23,7 @@ public class JwtService {
 
     public String generateToken(User user) {
         Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("id_user", user.getIdUser());
-        extraClaims.put("role", "ROLE_RESTAURANT");
+        extraClaims.put("idUser", user.getIdUser());
 
         return Jwts.builder()
                 .setClaims(extraClaims)
@@ -41,9 +39,8 @@ public class JwtService {
         return claims.get("idUser", Long.class);
     }
     
-    public String extractName(String token) {
-        Claims claims = extractAllClaims(token);
-        return claims.get("username", String.class);
+    public String extractUsername(String token) {
+        return extractAllClaims(token).getSubject();
     }
     
     private Claims extractAllClaims(String token) {
@@ -59,7 +56,7 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractName(token);
+        final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }

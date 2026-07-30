@@ -29,7 +29,6 @@ public class ServiceTable {
     @Column(name = "created_at")
     public String created_at;
 
-    // Foreign key of restaurant
     @ManyToOne
     @JoinColumn(name = "id_restaurant")
     private Restaurant restaurant;

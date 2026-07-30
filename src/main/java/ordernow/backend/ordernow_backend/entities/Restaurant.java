@@ -14,6 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -36,11 +37,15 @@ public class Restaurant {
     @JoinColumn(name = "id_service_table")
     public Collection<ServiceTable> serviceTableList;
 
+    @OneToMany(mappedBy = "restaurant") 
+    private List<User> userList;
 
     public Restaurant(String name) {
         this.name = name;
         this.created_at = LocalDateTime.now();
     }
+
+    public Restaurant() {}
 
     public Long getIdRestaurant() {
         return idRestaurant;
