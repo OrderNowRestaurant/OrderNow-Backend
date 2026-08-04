@@ -20,11 +20,8 @@ public class ServiceTable {
     @Column(name = "id_service_table")
     private Long idServiceTable;
 
-    @Column(name = "number")
-    public Long number;
-
-    @Column(name = "qr_code_token")
-    public String qrCodeToken;
+    @Column(name = "name")
+    public String name;
 
     @Column(name = "created_at")
     public String created_at;
@@ -32,4 +29,9 @@ public class ServiceTable {
     @ManyToOne
     @JoinColumn(name = "id_restaurant")
     private Restaurant restaurant;
+
+    public ServiceTable(String name, Restaurant restaurant) {
+        this.name = name;
+        this.restaurant = restaurant;
+    }
 }
