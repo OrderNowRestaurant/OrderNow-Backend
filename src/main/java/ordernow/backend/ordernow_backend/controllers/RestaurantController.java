@@ -1,15 +1,18 @@
 package ordernow.backend.ordernow_backend.controllers;
 
-import java.util.Optional;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import ordernow.backend.ordernow_backend.entities.Restaurant;
+import ordernow.backend.ordernow_backend.requests.restaurant.CreateRestaurantRequest;
+import ordernow.backend.ordernow_backend.responses.restaurant.RestaurantResponse;
 import ordernow.backend.ordernow_backend.services.RestaurantService;
 
 @RestController
+@RequestMapping("/api/restaurant")
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
@@ -18,13 +21,18 @@ public class RestaurantController {
         this.restaurantService = restaurantService;
     }
     
-    /*@PostMapping("/restaurant/register")
-    public Restaurant createRestaurant(@RequestBody Restaurant restaurant) {
-        return this.restaurantService.save(restaurant);
+    @PostMapping("/create")
+    public RestaurantResponse createRestaurant(@RequestBody CreateRestaurantRequest restaurantRequest) {
+        return this.restaurantService.save(restaurantRequest);
     }
-    
-    @PostMapping("/restaurant/login")
-    public Restaurant logiRestaurant(@RequestBody Optional<Restaurant> restaurant) throws Exception {
-        return this.restaurantService.checkRestaurant(restaurant);
-    }*/
+
+    @GetMapping("/find")
+    public RestaurantResponse getRestaurantFromUser() {
+        return this.restaurantService.getResturantByUser();
+    }
+
+    @DeleteMapping("/delete")
+    public RestaurantResponse deleteRestaurant() {
+        return this.restaurantService.deleteRestaurantByUser();
+    }
 }

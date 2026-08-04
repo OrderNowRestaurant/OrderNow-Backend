@@ -11,4 +11,6 @@ import ordernow.backend.ordernow_backend.entities.Restaurant;
 public interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
 
     Optional<Restaurant> findByName(String name);
+
+    boolean existsByUserList_Username(String username);
 }

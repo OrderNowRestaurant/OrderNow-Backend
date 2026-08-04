@@ -1,6 +1,5 @@
 package ordernow.backend.ordernow_backend.services;
 
-import org.apache.coyote.Response;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
