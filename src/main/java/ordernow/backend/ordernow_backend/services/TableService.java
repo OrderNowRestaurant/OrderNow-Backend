@@ -2,6 +2,7 @@ package ordernow.backend.ordernow_backend.services;
 
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import ordernow.backend.ordernow_backend.entities.Restaurant;
@@ -10,9 +11,9 @@ import ordernow.backend.ordernow_backend.entities.User;
 import ordernow.backend.ordernow_backend.repositories.RestaurantRepository;
 import ordernow.backend.ordernow_backend.repositories.TableServiceRepository;
 import ordernow.backend.ordernow_backend.repositories.UserRepository;
-import ordernow.backend.ordernow_backend.requests.restaurant.CreateRestaurantRequest;
 import ordernow.backend.ordernow_backend.requests.table.CreateTableRequest;
-import ordernow.backend.ordernow_backend.responses.restaurant.RestaurantResponse;
+import ordernow.backend.ordernow_backend.requests.table.DeleteTableRequest;
+import ordernow.backend.ordernow_backend.requests.table.UpdateTableRequest;
 import ordernow.backend.ordernow_backend.responses.table.TableResponse;
 
 @Service
@@ -36,7 +37,7 @@ public class TableService {
                 authService.getUsername()
         ).get();
 
-        List<ServiceTable> tableList = tableServiceRepository.findByRestaurant(user.getRestaurant());
+        List<ServiceTable> tableList = tableServiceRepository.findByRestaurant(user.getRestaurant(), Sort.by(Sort.Direction.ASC, "createdAt"));
 
         if (tableList.isEmpty()) {
             return new TableResponse(null, "No se ha encontrado ninguna mesa para este restaurante.");
@@ -45,6 +46,11 @@ public class TableService {
         }
     }
 
+    /**
+     * Create a table and returns a list of it
+     * @param createTableRequest
+     * @return
+     */
     public TableResponse createTable(CreateTableRequest createTableRequest) {
         String username = authService.getUsername();
 
@@ -57,6 +63,30 @@ public class TableService {
         List<ServiceTable> serviceTables = List.of(savedTable);
 
         return new TableResponse(serviceTables, "La mesa se ha creado correctamente.");
+    }
+
+    public TableResponse updateTable(UpdateTableRequest updateTableRequest) {
+        ServiceTable table = tableServiceRepository.findByQrToken(updateTableRequest.getQrToken());
+        table.setStatus(updateTableRequest.getNewStatus());
+
+        ServiceTable savedTable = tableServiceRepository.save(table);
+
+        List<ServiceTable> serviceTables = List.of(savedTable);
+
+        return new TableResponse(serviceTables, "La mesa se ha actualizado correctamente.");
+    }
+
+    public TableResponse deleteTable(DeleteTableRequest deleteTableRequest) {
+        ServiceTable table = tableServiceRepository.findByQrToken(deleteTableRequest.getQrToken());
+
+        if (table != null) {
+            tableServiceRepository.delete(table);
+        } else {
+            return new TableResponse(null, "La mesa indicada no se ha encontrado.");
+        }
+        
+
+        return new TableResponse(null, "La mesa se ha borrado correctamente.");
     }
     
 }

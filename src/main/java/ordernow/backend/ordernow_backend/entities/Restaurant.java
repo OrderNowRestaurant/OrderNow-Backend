@@ -50,4 +50,8 @@ public class Restaurant {
     public Long getIdRestaurant() {
         return idRestaurant;
     }
+
+    public String getName() {
+        return name;
+    }
 }
