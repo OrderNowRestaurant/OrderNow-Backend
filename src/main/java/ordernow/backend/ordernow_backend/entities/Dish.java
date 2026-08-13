@@ -1,6 +1,6 @@
 package ordernow.backend.ordernow_backend.entities;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,11 +26,29 @@ public class Dish {
     @Column(name = "time")
     public int time;
 
+    @Column(name = "price")
+    public float price;
+
+    @Column(name = "description")
+    public String description;
+
+    @Column(name = "created_at")
+    public LocalDateTime createdAt;
+
     @ManyToOne
     @JoinColumn(name = "id_category")
-    public Category cateogory;
+    public Category category;
 
     @ManyToOne
     @JoinColumn(name = "id_restaurant")
     public Restaurant restaurant;
+
+    public Dish(Restaurant restaurant, Category category, String name, String description, float price, int time) {
+        this.restaurant = restaurant;
+        this.category = category;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.time = time;
+    }
 }
