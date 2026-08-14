@@ -50,5 +50,10 @@ public class Dish {
         this.description = description;
         this.price = price;
         this.time = time;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public Dish() {
+        
     }
 }
