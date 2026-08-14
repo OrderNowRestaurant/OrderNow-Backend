@@ -17,7 +17,7 @@ import ordernow.backend.ordernow_backend.services.TableService;
 @RequestMapping("/api/table")
 public class TableServiceController {
 
-     private final TableService tableService;
+    private final TableService tableService;
 
     public TableServiceController(TableService tableService) {
         this.tableService = tableService;
