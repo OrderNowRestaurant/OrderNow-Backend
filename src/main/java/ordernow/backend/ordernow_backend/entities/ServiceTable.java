@@ -7,8 +7,7 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
 
-import org.springframework.context.annotation.Primary;
-
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,7 +42,7 @@ public class ServiceTable {
     @Column(name = "status")
     public StatusTypeEnum status;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_restaurant")
     private Restaurant restaurant;
 
