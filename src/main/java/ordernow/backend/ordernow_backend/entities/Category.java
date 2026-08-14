@@ -3,6 +3,7 @@ package ordernow.backend.ordernow_backend.entities;
 import java.sql.Date;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,7 +29,7 @@ public class Category {
     @Column(name = "created_at")
     public Date created_at;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_restaurant")
     private Restaurant restaurant;
 

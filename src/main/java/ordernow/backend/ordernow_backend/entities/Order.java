@@ -2,6 +2,7 @@ package ordernow.backend.ordernow_backend.entities;
 
 import java.util.Collection;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,11 +26,11 @@ public class Order {
     public Long estimatedHumor;
 
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_dish")
     public Collection<Dish> dishList;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_service_table")
     public ServiceTable serviceTable;
 }
