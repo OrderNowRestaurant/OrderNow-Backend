@@ -1,6 +1,6 @@
 package ordernow.backend.ordernow_backend.entities;
 
-import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -27,7 +27,7 @@ public class Category {
     public String name;
 
     @Column(name = "created_at")
-    public Date created_at;
+    public LocalDateTime createdAt;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_restaurant")
@@ -35,4 +35,14 @@ public class Category {
 
     @OneToMany(mappedBy = "category")
     private List<Dish> dishList;
+
+    public Category(String name, Restaurant restaurant) {
+        this.name = name;
+        this.restaurant = restaurant;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public Category() {
+
+    }
 }

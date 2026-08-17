@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import ordernow.backend.ordernow_backend.entities.Category;
+import ordernow.backend.ordernow_backend.entities.Restaurant;
 import ordernow.backend.ordernow_backend.entities.User;
 import ordernow.backend.ordernow_backend.repositories.CategoryRepository;
 import ordernow.backend.ordernow_backend.repositories.UserRepository;
+import ordernow.backend.ordernow_backend.requests.category.CreateCategoryRequest;
 import ordernow.backend.ordernow_backend.responses.category.CategoryResponse;
 
 @Service
@@ -41,7 +43,23 @@ public class CategoryService {
      * TO DO
      * @return
      */
-    public CategoryResponse createCategory() {
-        return new CategoryResponse(null, null);
+    public CategoryResponse createCategory(CreateCategoryRequest createCategoryRequest) {
+        User user = userRepository.findByUsername(
+                authService.getUsername()
+        ).get();
+        
+        if(!checkIfCategoryAlreadyExists(createCategoryRequest.getName(), user.getRestaurant())) {
+            Category newCategory = categoryRepository.save(new Category(createCategoryRequest.getName(), user.getRestaurant()));
+
+            List<Category> categoryList = List.of(newCategory);
+
+            return new CategoryResponse(categoryList, "La categoría se ha creado correctamente.");
+        } else {
+            return new CategoryResponse(null, "La categoría ya existe por lo tanto no puede ser creada.");
+        }   
+    }
+
+    public boolean checkIfCategoryAlreadyExists(String categoryName, Restaurant restaurant) {
+        return categoryRepository.existsByNameAndRestaurant(categoryName, restaurant);
     }
 }
