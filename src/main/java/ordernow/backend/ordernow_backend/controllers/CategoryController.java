@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import ordernow.backend.ordernow_backend.requests.category.CreateCategoryRequest;
+import ordernow.backend.ordernow_backend.requests.category.DeleteCategoryRequest;
 import ordernow.backend.ordernow_backend.responses.category.CategoryResponse;
 import ordernow.backend.ordernow_backend.services.CategoryService;
 
@@ -25,12 +26,18 @@ public class CategoryController {
         return this.categoryService.getCategories();
     }
 
+    @GetMapping("/own/get")
+    public CategoryResponse getOwnCategories() {
+        return this.categoryService.getOwnCategories();
+    }
+
     @PostMapping("/create")
     public CategoryResponse createCategory(@RequestBody CreateCategoryRequest createCategoryRequest) {
         return this.categoryService.createCategory(createCategoryRequest);
     }
 
-    /*
-    @
-    */
+    @PostMapping("/delete")
+    public CategoryResponse deleteCategory(@RequestBody DeleteCategoryRequest deleteCategoryRequest) {
+        return this.categoryService.deleteCategory(deleteCategoryRequest);
+    }
 }

@@ -10,6 +10,7 @@ import ordernow.backend.ordernow_backend.entities.User;
 import ordernow.backend.ordernow_backend.repositories.CategoryRepository;
 import ordernow.backend.ordernow_backend.repositories.UserRepository;
 import ordernow.backend.ordernow_backend.requests.category.CreateCategoryRequest;
+import ordernow.backend.ordernow_backend.requests.category.DeleteCategoryRequest;
 import ordernow.backend.ordernow_backend.responses.category.CategoryResponse;
 
 @Service
@@ -25,6 +26,20 @@ public class CategoryService {
         this.userRepository = userRepository;
     }
     
+    public CategoryResponse getOwnCategories() {
+        User user = userRepository.findByUsername(
+                authService.getUsername()
+        ).get();
+
+        List<Category> categoryList = this.categoryRepository.findByRestaurant(user.getRestaurant());
+
+        if (categoryList.isEmpty()) {
+            return new CategoryResponse(null, "No se han encontrado las categorías.");
+        } else {
+            return new CategoryResponse(categoryList, "Se han encontrado las categorías.");
+        }
+    }
+
     public CategoryResponse getCategories() {
         User user = userRepository.findByUsername(
                 authService.getUsername()
@@ -39,10 +54,6 @@ public class CategoryService {
         }
     }
 
-    /**
-     * TO DO
-     * @return
-     */
     public CategoryResponse createCategory(CreateCategoryRequest createCategoryRequest) {
         User user = userRepository.findByUsername(
                 authService.getUsername()
@@ -56,6 +67,20 @@ public class CategoryService {
             return new CategoryResponse(categoryList, "La categoría se ha creado correctamente.");
         } else {
             return new CategoryResponse(null, "La categoría ya existe por lo tanto no puede ser creada.");
+        }   
+    }
+
+    public CategoryResponse deleteCategory(DeleteCategoryRequest deleteCategoryRequest) {
+        User user = userRepository.findByUsername(
+                authService.getUsername()
+        ).get();
+        
+        if(checkIfCategoryAlreadyExists(deleteCategoryRequest.getName(), user.getRestaurant())) {
+            categoryRepository.delete(categoryRepository.findByName(deleteCategoryRequest.getName()));
+
+            return new CategoryResponse(null, "La categoría se ha borrado correctamente.");
+        } else {
+            return new CategoryResponse(null, "La categoría no se puede borrar por que no existe.");
         }   
     }
 
