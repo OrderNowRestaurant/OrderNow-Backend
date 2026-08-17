@@ -16,5 +16,9 @@ public interface CategoryRepository extends CrudRepository<Category, Long> {
     @Query("SELECT c FROM Category c WHERE c.restaurant IS NULL OR c.restaurant = :restaurant")
     List<Category> findByRestaurantIsNullMatchesOrRestaurant(@Param("restaurant") Restaurant restaurant);
 
+    List<Category> findByRestaurant(@Param("restaurant") Restaurant restaurant);
+
     Category findByName(@Param("name") String name);
+
+    boolean existsByNameAndRestaurant(String name, Restaurant restaurant);
 }

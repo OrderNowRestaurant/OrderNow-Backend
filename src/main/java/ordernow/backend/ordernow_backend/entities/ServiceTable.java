@@ -42,7 +42,7 @@ public class ServiceTable {
     @Column(name = "status")
     public StatusTypeEnum status;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "id_restaurant")
     private Restaurant restaurant;
 
@@ -73,5 +73,9 @@ public class ServiceTable {
 
     public void setStatus(StatusTypeEnum status) {
         this.status = status;
+    }
+
+    public Long getIdServiceTable() {
+        return idServiceTable;
     }
 }
