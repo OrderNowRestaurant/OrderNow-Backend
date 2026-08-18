@@ -50,6 +50,13 @@ public class User implements UserDetails {
         this.created_at = LocalDateTime.now();
     }
 
+    public User(String username, String password, Role role) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.created_at = LocalDateTime.now();
+    }
+
     public User() {
     }
 
@@ -77,10 +84,19 @@ public class User implements UserDetails {
         return restaurant;
     }
 
+    public void setRole(Role role) {
+        this.role = role;
+    }
 
+    public Role getRole() {
+        return role;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("USER"));
+        if (this.role == null || this.role.getRoleName() == null) {
+            return List.of();
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getRoleName().name()));
     }
 }
