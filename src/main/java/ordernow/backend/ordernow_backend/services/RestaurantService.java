@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import ordernow.backend.ordernow_backend.entities.Restaurant;
 import ordernow.backend.ordernow_backend.entities.User;
+import ordernow.backend.ordernow_backend.enums.RoleName;
 import ordernow.backend.ordernow_backend.repositories.RestaurantRepository;
+import ordernow.backend.ordernow_backend.repositories.RoleRepository;
 import ordernow.backend.ordernow_backend.repositories.UserRepository;
 import ordernow.backend.ordernow_backend.requests.restaurant.CreateRestaurantRequest;
 import ordernow.backend.ordernow_backend.responses.restaurant.RestaurantResponse;
@@ -19,11 +21,13 @@ public class RestaurantService extends JwtService {
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
     private final AuthService authService;
+    private final RoleRepository roleRepository;
 
-    public RestaurantService(RestaurantRepository restaurantRepository, UserRepository userRepository, AuthService authService) {
+    public RestaurantService(RestaurantRepository restaurantRepository, UserRepository userRepository, AuthService authService, RoleRepository roleRepository) {
         this.restaurantRepository = restaurantRepository;
         this.userRepository = userRepository;
         this.authService = authService;
+        this.roleRepository = roleRepository;
     }
 
     /**
@@ -97,6 +101,8 @@ public class RestaurantService extends JwtService {
         Optional<User> user = userRepository.findByUsername(principal instanceof UserDetails userDetails ? userDetails.getUsername() : principal.toString());
 
         user.get().setRestaurant(restaurant);
+        
+        user.get().setRole(roleRepository.findByRoleName(RoleName.MANAGER));
 
         userRepository.save(user.get());
     }
