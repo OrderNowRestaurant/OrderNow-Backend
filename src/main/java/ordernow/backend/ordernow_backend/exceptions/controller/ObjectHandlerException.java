@@ -2,6 +2,8 @@ package ordernow.backend.ordernow_backend.exceptions.controller;
 
 import java.time.LocalDateTime;
 
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +18,7 @@ import ordernow.backend.ordernow_backend.responses.ErrorResponse;
  * ObjectHandlerException
  */
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class ObjectHandlerException {
     
     @ExceptionHandler(ResourceNotFoundException.class)
