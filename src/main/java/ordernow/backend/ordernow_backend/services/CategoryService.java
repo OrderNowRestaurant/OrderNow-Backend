@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 
 import ordernow.backend.ordernow_backend.entities.Category;
 import ordernow.backend.ordernow_backend.entities.Restaurant;
-import ordernow.backend.ordernow_backend.entities.User;
+import ordernow.backend.ordernow_backend.exceptions.DuplicateResourceException;
+import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.repositories.CategoryRepository;
-import ordernow.backend.ordernow_backend.repositories.UserRepository;
 import ordernow.backend.ordernow_backend.requests.category.CreateCategoryRequest;
 import ordernow.backend.ordernow_backend.requests.category.DeleteCategoryRequest;
 import ordernow.backend.ordernow_backend.responses.category.CategoryResponse;
@@ -18,70 +18,54 @@ public class CategoryService {
 
     private CategoryRepository categoryRepository;
     private AuthService authService;
-    private UserRepository userRepository;
 
-    public CategoryService(CategoryRepository categoryRepository, AuthService authService, UserRepository userRepository) {
+    public CategoryService(CategoryRepository categoryRepository, AuthService authService) {
         this.categoryRepository = categoryRepository;
         this.authService = authService;
-        this.userRepository = userRepository;
     }
     
     public CategoryResponse getOwnCategories() {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
+        List<Category> categoryList = this.categoryRepository.findByRestaurant(authService.getAuthenticatedUser().getRestaurant());
 
-        List<Category> categoryList = this.categoryRepository.findByRestaurant(user.getRestaurant());
-
-        if (categoryList.isEmpty()) {
-            return new CategoryResponse(null, "No se han encontrado las categorías.");
-        } else {
-            return new CategoryResponse(categoryList, "Se han encontrado las categorías.");
+        if (categoryList == null || categoryList.isEmpty()) {
+            throw new ResourceNotFoundException("No se ha encontrado ninguna categoría creada.");
         }
+        
+        return new CategoryResponse(categoryList, "Se han encontrado las categorías.");
     }
 
     public CategoryResponse getCategories() {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
+        List<Category> categoryList = this.categoryRepository.findByRestaurantIsNullMatchesOrRestaurant(authService.getAuthenticatedUser().getRestaurant());
 
-        List<Category> categoryList = this.categoryRepository.findByRestaurantIsNullMatchesOrRestaurant(user.getRestaurant());
+        if (categoryList == null || categoryList.isEmpty()) {
+            throw new ResourceNotFoundException("No se han encontrado las categorías.");
+        } 
+        
+        return new CategoryResponse(categoryList, "Se han encontrado las categorías.");
+    }
 
-        if (categoryList.isEmpty()) {
-            return new CategoryResponse(null, "No se han encontrado las categorías.");
-        } else {
-            return new CategoryResponse(categoryList, "Se han encontrado las categorías.");
+    public CategoryResponse createCategory(CreateCategoryRequest createCategoryRequest) {        
+        if(checkIfCategoryAlreadyExists(createCategoryRequest.getName(), authService.getAuthenticatedUser().getRestaurant())) {
+
+            throw new DuplicateResourceException("La categoría ya existe por lo tanto no puede ser creada.");
         }
+
+        Category newCategory = categoryRepository.save(new Category(createCategoryRequest.getName(), authService.getAuthenticatedUser().getRestaurant()));
+
+        List<Category> categoryList = List.of(newCategory);
+
+        return new CategoryResponse(categoryList, "La categoría se ha creado correctamente.");
     }
 
-    public CategoryResponse createCategory(CreateCategoryRequest createCategoryRequest) {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
-        
-        if(!checkIfCategoryAlreadyExists(createCategoryRequest.getName(), user.getRestaurant())) {
-            Category newCategory = categoryRepository.save(new Category(createCategoryRequest.getName(), user.getRestaurant()));
+    public CategoryResponse deleteCategory(DeleteCategoryRequest deleteCategoryRequest) {        
+        if(!checkIfCategoryAlreadyExists(deleteCategoryRequest.getName(), authService.getAuthenticatedUser().getRestaurant())) {
 
-            List<Category> categoryList = List.of(newCategory);
+            throw new ResourceNotFoundException("No se ha encontrado la categoría que se está intentando borrar.");
+        } 
 
-            return new CategoryResponse(categoryList, "La categoría se ha creado correctamente.");
-        } else {
-            return new CategoryResponse(null, "La categoría ya existe por lo tanto no puede ser creada.");
-        }   
-    }
+        categoryRepository.delete(categoryRepository.findByName(deleteCategoryRequest.getName()));
 
-    public CategoryResponse deleteCategory(DeleteCategoryRequest deleteCategoryRequest) {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
-        
-        if(checkIfCategoryAlreadyExists(deleteCategoryRequest.getName(), user.getRestaurant())) {
-            categoryRepository.delete(categoryRepository.findByName(deleteCategoryRequest.getName()));
-
-            return new CategoryResponse(null, "La categoría se ha borrado correctamente.");
-        } else {
-            return new CategoryResponse(null, "La categoría no se puede borrar por que no existe.");
-        }   
+        return new CategoryResponse(null, "La categoría se ha borrado correctamente.");
     }
 
     public boolean checkIfCategoryAlreadyExists(String categoryName, Restaurant restaurant) {

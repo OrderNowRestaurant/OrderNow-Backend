@@ -1,14 +1,12 @@
 package ordernow.backend.ordernow_backend.services;
 
-import java.util.Optional;
-
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import ordernow.backend.ordernow_backend.entities.Restaurant;
-import ordernow.backend.ordernow_backend.entities.User;
 import ordernow.backend.ordernow_backend.enums.RoleName;
+import ordernow.backend.ordernow_backend.exceptions.DuplicateResourceException;
+import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.repositories.RestaurantRepository;
 import ordernow.backend.ordernow_backend.repositories.RoleRepository;
 import ordernow.backend.ordernow_backend.repositories.UserRepository;
@@ -37,14 +35,14 @@ public class RestaurantService extends JwtService {
      */
     public RestaurantResponse save(CreateRestaurantRequest restaurantRequest) {
         if(checkIfUserIsAlreadyOwner(restaurantRequest) && checkIfResturantAlreadyExists(restaurantRequest.getName())) {
-            return new RestaurantResponse(null, "No se ha podido crear el restaurante " + restaurantRequest.getName() + ". El restaurante ya existe o ya has creado un restaurante.");
-        } else {
-            Restaurant restaurant = restaurantRepository.save(new Restaurant(restaurantRequest.getName()));
-
-            asignRestaurantToUser(restaurant);
-
-            return new RestaurantResponse(restaurant, "Se ha creado el restaurant correctamente.");
+            throw new DuplicateResourceException("No se ha podido crear el restaurante " + restaurantRequest.getName() + ". El restaurante ya existe o ya has creado un restaurante.");
         }
+
+        Restaurant restaurant = restaurantRepository.save(new Restaurant(restaurantRequest.getName()));
+
+        asignRestaurantToUser(restaurant);
+
+        return new RestaurantResponse(restaurant, "Se ha creado el restaurant correctamente.");
     }
 
     /**
@@ -52,30 +50,23 @@ public class RestaurantService extends JwtService {
      * @return
      */
     public RestaurantResponse getResturantByUser() {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
+        if (authService.getAuthenticatedUser().getRestaurant() == null) {
+            throw new ResourceNotFoundException("Este usuario no tiene ningún restaurante vinculado.");
+        }
 
-        return user.getRestaurant() != null ? 
-            new RestaurantResponse(user.getRestaurant(), "Este usuario tiene un restaurante vinculado.")
-            :
-            new RestaurantResponse(null, "Este usuario no tiene ningún restaurante vinculado.");
+        return new RestaurantResponse(authService.getAuthenticatedUser().getRestaurant(), "Este usuario tiene un restaurante vinculado.");
     }
 
     @Transactional
     public RestaurantResponse deleteRestaurantByUser() {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
-
-        if(user.getRestaurant() != null) {
-            restaurantRepository.delete(user.getRestaurant());
-            user.setRestaurant(null);
-
-            return new RestaurantResponse(null, "El restaurante ha sido borrado correctamente.");
+        if(authService.getAuthenticatedUser().getRestaurant() == null) {
+            throw new ResourceNotFoundException("El restaurante no ha podido ser borrado. El usuario actual no tiene asignado ningún restaurante.");
         }
 
-        return new RestaurantResponse(user.getRestaurant(), "El restaurante no ha podido ser borrado.");
+        restaurantRepository.delete(authService.getAuthenticatedUser().getRestaurant());
+        authService.getAuthenticatedUser().setRestaurant(null);
+
+        return new RestaurantResponse(null, "El restaurante ha sido borrado correctamente.");
     }
 
 
@@ -96,16 +87,10 @@ public class RestaurantService extends JwtService {
     }
 
     public void asignRestaurantToUser(Restaurant restaurant) {
-        Object principal = authService.getPrincipal();
-
-        Optional<User> user = userRepository.findByUsername(principal instanceof UserDetails userDetails ? userDetails.getUsername() : principal.toString());
-
-        user.get().setRestaurant(restaurant);
+        authService.getAuthenticatedUser().setRestaurant(restaurant);
         
-        user.get().setRole(roleRepository.findByRoleName(RoleName.MANAGER));
+        authService.getAuthenticatedUser().setRole(roleRepository.findByRoleName(RoleName.MANAGER));
 
-        userRepository.save(user.get());
+        userRepository.save(authService.getAuthenticatedUser());
     }
-
-
 }

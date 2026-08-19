@@ -1,7 +1,5 @@
 package ordernow.backend.ordernow_backend.requests.user;
 
-import ordernow.backend.ordernow_backend.entities.Role;
-
 public class CreateUserRequest {
     private String username;
     private String password;

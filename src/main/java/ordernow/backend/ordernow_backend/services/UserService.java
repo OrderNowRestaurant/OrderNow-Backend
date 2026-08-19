@@ -3,8 +3,8 @@ package ordernow.backend.ordernow_backend.services;
 import java.util.List;
 
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +12,9 @@ import ordernow.backend.ordernow_backend.dtos.UserResponseDTO;
 import ordernow.backend.ordernow_backend.entities.Role;
 import ordernow.backend.ordernow_backend.entities.User;
 import ordernow.backend.ordernow_backend.enums.RoleName;
+import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
+import ordernow.backend.ordernow_backend.exceptions.UserAlreadyExistsException;
+import ordernow.backend.ordernow_backend.exceptions.UserBadCredentialsException;
 import ordernow.backend.ordernow_backend.repositories.RoleRepository;
 import ordernow.backend.ordernow_backend.repositories.UserRepository;
 import ordernow.backend.ordernow_backend.requests.LoginRequest;
@@ -43,11 +46,7 @@ public class UserService {
     }
 
     public UserListResponse getUsers() {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
-
-        List<User> userList = userRepository.findByRestaurant(user.getRestaurant());
+        List<User> userList = userRepository.findByRestaurant(authService.getAuthenticatedUser().getRestaurant());
 
         List<UserResponseDTO> dtoList = userList.stream()
             .map(UserResponseDTO::fromEntity) 
@@ -57,9 +56,8 @@ public class UserService {
     }
 
     public BaseResponse save(User user) {
-
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("El nombre de usuario ya está registrado");
+            throw new UserAlreadyExistsException("El nombre de usuario ya está registrado.");
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -75,14 +73,13 @@ public class UserService {
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
-        } catch (BadCredentialsException e) {
+        } catch (AuthenticationException au) {
 
-            throw new BadCredentialsException("Usuario o contraseña incorrectos");
-
+            throw new UserBadCredentialsException("Usuario o contraseña incorrectos");
         }
 
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new BadCredentialsException("Usuario o contraseña incorrectos"));
+                .orElseThrow(() -> new UserBadCredentialsException("Usuario o contraseña incorrectos"));
 
         String jwtToken = jwtService.generateToken(user);
 
@@ -90,17 +87,13 @@ public class UserService {
     }
 
     public UserResponse createUser(CreateUserRequest createUserRequest) {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
-
         RoleName roleEnum = RoleName.valueOf(createUserRequest.getRoleName().toUpperCase());
 
         User newUser = userRepository.save(new User(
             createUserRequest.getUsername(), 
             passwordEncoder.encode(createUserRequest.getPassword()),
             roleRepository.findByRoleName(roleEnum),
-            user.getRestaurant()
+            authService.getAuthenticatedUser().getRestaurant()
         ));
 
         return new UserResponse("Se ha creado el usuario correctamente", UserResponseDTO.fromEntity(newUser));
@@ -108,6 +101,10 @@ public class UserService {
 
     public UserResponse changeUserRole(User user) {
         Role actualRole = this.roleRepository.findByRoleName(user.getRole().getRoleName());
+
+        if (actualRole == null) {
+            throw new ResourceNotFoundException("No se ha encontrado ningún rol.");
+        }
 
         if(actualRole.getRoleName() == RoleName.MANAGER) {
             user.setRole(this.roleRepository.findByRoleName(RoleName.WORKER));
@@ -121,11 +118,11 @@ public class UserService {
     }
 
     public BaseResponse deleteUser(String username) {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
+        User userToDelete = userRepository.findByUsernameAndRestaurant(username, authService.getAuthenticatedUser().getRestaurant()).get();
 
-        User userToDelete = userRepository.findByUsernameAndRestaurant(username, user.getRestaurant()).get();
+        if (userToDelete == null) {
+            throw new ResourceNotFoundException("El usuario que se quiere eliminar no ha sido encontrado.");
+        }
 
         userRepository.delete(userToDelete);
 
@@ -133,11 +130,12 @@ public class UserService {
     } 
 
     public UserResponse editUser(EditUserRequest editUserRequest) {
-        User actualUser = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
 
-        User userToEdit = userRepository.findByUsernameAndRestaurant(editUserRequest.getOriginalUsername(), actualUser.getRestaurant()).get();
+        User userToEdit = userRepository.findByUsernameAndRestaurant(editUserRequest.getOriginalUsername(), authService.getAuthenticatedUser().getRestaurant()).get();
+
+        if (userToEdit == null) {
+            throw new ResourceNotFoundException("No se ha encontrado el usuario que se quiere editar");
+        }
 
         userToEdit.setPassword(passwordEncoder.encode(editUserRequest.getPassword()));
         userToEdit.setRole(roleRepository.findByRoleName(RoleName.valueOf(editUserRequest.getRoleName())));
