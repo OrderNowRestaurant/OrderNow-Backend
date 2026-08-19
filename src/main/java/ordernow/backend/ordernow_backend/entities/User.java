@@ -34,20 +34,28 @@ public class User implements UserDetails {
     public String password;
 
     @Column(name = "created_at")
-    public LocalDateTime created_at;
+    public LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(name = "id_role")
     public Role role;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "id_restaurant")
     public Restaurant restaurant;
 
     public User(String username, String password) {
         this.username = username;
         this.password = password;
-        this.created_at = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public User(String username, String password, Role role, Restaurant restaurant) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.restaurant = restaurant;
+        this.createdAt = LocalDateTime.now();
     }
 
     public User() {
@@ -60,6 +68,10 @@ public class User implements UserDetails {
     public String getUsername() {
         return this.username;
     } 
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     public String getPassword() {
         return this.password;
@@ -77,10 +89,19 @@ public class User implements UserDetails {
         return restaurant;
     }
 
+    public void setRole(Role role) {
+        this.role = role;
+    }
 
+    public Role getRole() {
+        return role;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("USER"));
+        if (this.role == null || this.role.getRoleName() == null) {
+            return List.of();
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getRoleName().name()));
     }
 }
