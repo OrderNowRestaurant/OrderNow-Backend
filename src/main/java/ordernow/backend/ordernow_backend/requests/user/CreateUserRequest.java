@@ -1,12 +1,11 @@
 package ordernow.backend.ordernow_backend.requests.user;
 
-import ordernow.backend.ordernow_backend.entities.Restaurant;
 import ordernow.backend.ordernow_backend.entities.Role;
 
 public class CreateUserRequest {
     private String username;
     private String password;
-    private Role role;
+    private String roleName;
 
     public String getPassword() {
         return password;
@@ -15,8 +14,8 @@ public class CreateUserRequest {
     public String getUsername() {
         return username;
     }
-    public Role getRole() {
-        return role;
+    public String getRoleName() {
+        return roleName;
     }
 
     public void setPassword(String password) {
