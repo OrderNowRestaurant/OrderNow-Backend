@@ -7,10 +7,9 @@ import org.springframework.stereotype.Service;
 
 import ordernow.backend.ordernow_backend.entities.Restaurant;
 import ordernow.backend.ordernow_backend.entities.ServiceTable;
-import ordernow.backend.ordernow_backend.entities.User;
+import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.repositories.RestaurantRepository;
 import ordernow.backend.ordernow_backend.repositories.TableServiceRepository;
-import ordernow.backend.ordernow_backend.repositories.UserRepository;
 import ordernow.backend.ordernow_backend.requests.table.CreateTableRequest;
 import ordernow.backend.ordernow_backend.requests.table.DeleteTableRequest;
 import ordernow.backend.ordernow_backend.requests.table.UpdateTableRequest;
@@ -21,29 +20,23 @@ public class TableService {
 
     private TableServiceRepository tableServiceRepository;
     private AuthService authService;
-    private UserRepository userRepository;
     private RestaurantRepository restaurantRepository;
 
-    public TableService(TableServiceRepository tableServiceRepository, AuthService authService, UserRepository userRepository, RestaurantRepository restaurantRepository) {
+    public TableService(TableServiceRepository tableServiceRepository, AuthService authService, RestaurantRepository restaurantRepository) {
         this.tableServiceRepository = tableServiceRepository;
         this.authService = authService;
-        this.userRepository = userRepository;
         this.restaurantRepository = restaurantRepository;
     }
 
 
     public TableResponse getAllTables() {
-        User user = userRepository.findByUsername(
-                authService.getUsername()
-        ).get();
+        List<ServiceTable> tableList = tableServiceRepository.findByRestaurant(authService.getAuthenticatedUser().getRestaurant(), Sort.by(Sort.Direction.ASC, "createdAt"));
 
-        List<ServiceTable> tableList = tableServiceRepository.findByRestaurant(user.getRestaurant(), Sort.by(Sort.Direction.ASC, "createdAt"));
-
-        if (tableList.isEmpty()) {
-            return new TableResponse(null, "No se ha encontrado ninguna mesa para este restaurante.");
-        } else {
-            return new TableResponse(tableList, "Se han encontrado las mesas del restaurante.");
+        if (tableList == null || tableList.isEmpty()) {
+            throw new ResourceNotFoundException("No se ha encontrado ninguna mesa para este restaurante.");
         }
+        
+        return new TableResponse(tableList, "Se han encontrado las mesas del restaurante.");
     }
 
     /**
@@ -52,10 +45,8 @@ public class TableService {
      * @return
      */
     public TableResponse createTable(CreateTableRequest createTableRequest) {
-        String username = authService.getUsername();
-
-        Restaurant restaurant = restaurantRepository.findByUserList_Username(username)
-                .orElseThrow(() -> new RuntimeException("Restaurante no encontrado para el usuario: " + username));
+        Restaurant restaurant = restaurantRepository.findByUserList_Username(authService.getAuthenticatedUser().getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Restaurante no encontrado al usuario: " + authService.getAuthenticatedUser().getUsername()));
 
         ServiceTable newTable = new ServiceTable(createTableRequest.getName(), restaurant);
         ServiceTable savedTable = tableServiceRepository.save(newTable);
@@ -67,6 +58,11 @@ public class TableService {
 
     public TableResponse updateTable(UpdateTableRequest updateTableRequest) {
         ServiceTable table = tableServiceRepository.findByQrToken(updateTableRequest.getQrToken());
+
+        if(table == null) {
+            throw new ResourceNotFoundException("No se ha encontrado la mesa.");
+        }
+
         table.setStatus(updateTableRequest.getNewStatus());
 
         ServiceTable savedTable = tableServiceRepository.save(table);
@@ -79,12 +75,11 @@ public class TableService {
     public TableResponse deleteTable(DeleteTableRequest deleteTableRequest) {
         ServiceTable table = tableServiceRepository.findByQrToken(deleteTableRequest.getQrToken());
 
-        if (table != null) {
-            tableServiceRepository.delete(table);
-        } else {
-            return new TableResponse(null, "La mesa indicada no se ha encontrado.");
+        if (table == null) {
+            throw new ResourceNotFoundException("La mesa indicada no se ha encontrado.");
         }
         
+        tableServiceRepository.delete(table);
 
         return new TableResponse(null, "La mesa se ha borrado correctamente.");
     }
