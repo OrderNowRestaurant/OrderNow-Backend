@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import ordernow.backend.ordernow_backend.exceptions.NotEnoughPermissionsException;
 import ordernow.backend.ordernow_backend.exceptions.UserAlreadyExistsException;
 import ordernow.backend.ordernow_backend.exceptions.UserBadCredentialsException;
 import ordernow.backend.ordernow_backend.responses.ErrorResponse;
@@ -35,5 +36,15 @@ public class AuthHandlerException {
             LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(NotEnoughPermissionsException.class)
+    public ResponseEntity<ErrorResponse> handleNotEnoughPermissionsException(NotEnoughPermissionsException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 }

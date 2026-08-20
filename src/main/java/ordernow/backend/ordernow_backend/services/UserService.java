@@ -12,6 +12,7 @@ import ordernow.backend.ordernow_backend.dtos.UserResponseDTO;
 import ordernow.backend.ordernow_backend.entities.Role;
 import ordernow.backend.ordernow_backend.entities.User;
 import ordernow.backend.ordernow_backend.enums.RoleName;
+import ordernow.backend.ordernow_backend.exceptions.NotEnoughPermissionsException;
 import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.exceptions.UserAlreadyExistsException;
 import ordernow.backend.ordernow_backend.exceptions.UserBadCredentialsException;
@@ -46,6 +47,10 @@ public class UserService {
     }
 
     public UserListResponse getUsers() {
+        if (authService.getAuthenticatedUser().getRole().getRoleName() != RoleName.MANAGER) {
+            throw new NotEnoughPermissionsException("No eres manager");
+        }
+
         List<User> userList = userRepository.findByRestaurant(authService.getAuthenticatedUser().getRestaurant());
 
         List<UserResponseDTO> dtoList = userList.stream()
@@ -60,9 +65,11 @@ public class UserService {
             throw new UserAlreadyExistsException("El nombre de usuario ya está registrado.");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        userRepository.save(user);
+        userRepository.save(new User(
+            user.getUsername(), 
+            passwordEncoder.encode(user.getPassword()), 
+            roleRepository.findByRoleName(RoleName.MANAGER)
+        ));
 
         return new BaseResponse("El usuario se ha registrado correctamente. Pruebe a iniciar sesión.");
     }
@@ -83,10 +90,14 @@ public class UserService {
 
         String jwtToken = jwtService.generateToken(user);
 
-        return new AuthResponse(jwtToken, user.getUsername(), "Has iniciado sesión correctamente.");
+        return new AuthResponse(jwtToken, user.getUsername(), user.getRole().getRoleName().name(), "Has iniciado sesión correctamente.");
     }
 
     public UserResponse createUser(CreateUserRequest createUserRequest) {
+        if (authService.getAuthenticatedUser().getRole().getRoleName() != RoleName.MANAGER) {
+            throw new NotEnoughPermissionsException("No eres manager");
+        }
+
         RoleName roleEnum = RoleName.valueOf(createUserRequest.getRoleName().toUpperCase());
 
         User newUser = userRepository.save(new User(
@@ -100,6 +111,10 @@ public class UserService {
     }
 
     public UserResponse changeUserRole(User user) {
+        if (authService.getAuthenticatedUser().getRole().getRoleName() != RoleName.MANAGER) {
+            throw new NotEnoughPermissionsException("No eres manager");
+        }
+
         Role actualRole = this.roleRepository.findByRoleName(user.getRole().getRoleName());
 
         if (actualRole == null) {
@@ -118,6 +133,10 @@ public class UserService {
     }
 
     public BaseResponse deleteUser(String username) {
+        if (authService.getAuthenticatedUser().getRole().getRoleName() != RoleName.MANAGER) {
+            throw new NotEnoughPermissionsException("No eres manager");
+        }
+
         User userToDelete = userRepository.findByUsernameAndRestaurant(username, authService.getAuthenticatedUser().getRestaurant()).get();
 
         if (userToDelete == null) {
@@ -130,7 +149,10 @@ public class UserService {
     } 
 
     public UserResponse editUser(EditUserRequest editUserRequest) {
-
+        if (authService.getAuthenticatedUser().getRole().getRoleName() != RoleName.MANAGER) {
+            throw new NotEnoughPermissionsException("No eres manager");
+        }
+        
         User userToEdit = userRepository.findByUsernameAndRestaurant(editUserRequest.getOriginalUsername(), authService.getAuthenticatedUser().getRestaurant()).get();
 
         if (userToEdit == null) {
