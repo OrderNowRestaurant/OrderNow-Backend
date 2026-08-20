@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import ordernow.backend.ordernow_backend.entities.Restaurant;
 import ordernow.backend.ordernow_backend.enums.RoleName;
 import ordernow.backend.ordernow_backend.exceptions.DuplicateResourceException;
+import ordernow.backend.ordernow_backend.exceptions.NotEnoughPermissionsException;
 import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.repositories.RestaurantRepository;
 import ordernow.backend.ordernow_backend.repositories.RoleRepository;
@@ -59,6 +60,10 @@ public class RestaurantService extends JwtService {
 
     @Transactional
     public RestaurantResponse deleteRestaurantByUser() {
+        if (authService.getAuthenticatedUser().getRole().getRoleName() != RoleName.MANAGER) {
+            throw new NotEnoughPermissionsException("No eres manager");
+        }
+        
         if(authService.getAuthenticatedUser().getRestaurant() == null) {
             throw new ResourceNotFoundException("El restaurante no ha podido ser borrado. El usuario actual no tiene asignado ningún restaurante.");
         }
