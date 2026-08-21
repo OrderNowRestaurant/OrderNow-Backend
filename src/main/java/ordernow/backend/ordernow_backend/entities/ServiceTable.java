@@ -77,4 +77,8 @@ public class ServiceTable {
     public Long getIdServiceTable() {
         return idServiceTable;
     }
+
+    public Restaurant getRestaurant() {
+        return restaurant;
+    }
 }
