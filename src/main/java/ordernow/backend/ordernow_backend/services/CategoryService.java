@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 
 import ordernow.backend.ordernow_backend.entities.Category;
 import ordernow.backend.ordernow_backend.entities.Restaurant;
+import ordernow.backend.ordernow_backend.entities.ServiceTable;
 import ordernow.backend.ordernow_backend.exceptions.DuplicateResourceException;
 import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.repositories.CategoryRepository;
+import ordernow.backend.ordernow_backend.repositories.TableServiceRepository;
 import ordernow.backend.ordernow_backend.requests.category.CreateCategoryRequest;
 import ordernow.backend.ordernow_backend.requests.category.DeleteCategoryRequest;
 import ordernow.backend.ordernow_backend.responses.category.CategoryResponse;
@@ -18,10 +20,12 @@ public class CategoryService {
 
     private CategoryRepository categoryRepository;
     private AuthService authService;
+    private TableServiceRepository tableServiceRepository;
 
-    public CategoryService(CategoryRepository categoryRepository, AuthService authService) {
+    public CategoryService(CategoryRepository categoryRepository, AuthService authService, TableServiceRepository tableServiceRepository) {
         this.categoryRepository = categoryRepository;
         this.authService = authService;
+        this.tableServiceRepository = tableServiceRepository;
     }
     
     public CategoryResponse getOwnCategories() {
@@ -70,5 +74,21 @@ public class CategoryService {
 
     public boolean checkIfCategoryAlreadyExists(String categoryName, Restaurant restaurant) {
         return categoryRepository.existsByNameAndRestaurant(categoryName, restaurant);
+    }
+
+    public CategoryResponse getCategories(String qrToken) {
+        ServiceTable serviceTable = tableServiceRepository.findByQrToken(qrToken);
+
+        if (serviceTable == null) {
+            throw new ResourceNotFoundException("El QR que ha leído no es correcto o la mesa no está disponible.");
+        }
+
+        List<Category> categoryList = this.categoryRepository.findByRestaurantIsNullMatchesOrRestaurant(serviceTable.getRestaurant());
+
+        if (categoryList == null || categoryList.isEmpty()) {
+            throw new ResourceNotFoundException("No se han encontrado las categorías.");
+        } 
+        
+        return new CategoryResponse(categoryList, "Se han encontrado las categorías.");
     }
 }
