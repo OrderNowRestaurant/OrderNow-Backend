@@ -3,7 +3,6 @@ package ordernow.backend.ordernow_backend.entities;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,20 +22,28 @@ public class Order {
     @Column(name = "id_order")
     private Long idOrder;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "id_service_table")
     public ServiceTable serviceTable;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "id_restaurant")
     public Restaurant restaurant;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order")
     private List<OrderItem> items = new ArrayList<>();
 
     public Order(ServiceTable serviceTable, Restaurant restaurant) {
         this.serviceTable = serviceTable;
         this.restaurant = restaurant;
+    }
+
+    public Order() {
+        
+    }
+
+    public Long getIdOrder() {
+        return idOrder;
     }
 
     public ServiceTable getServiceTable() {

@@ -111,4 +111,9 @@ public class User implements UserDetails {
         }
         return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getRoleName().name()));
     }
+
+    @Override
+    public String toString() {
+        return this.getUsername();
+    }
 }
