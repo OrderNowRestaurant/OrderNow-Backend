@@ -11,15 +11,13 @@ import ordernow.backend.ordernow_backend.services.OrderHandler;
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
-	
-	@Autowired
-	private OrderHandler orderHandler;
-	
-	@Override 
-	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-		registry.addHandler(orderHandler, "/ws-order")
-			.setAllowedOrigins("http://localhost:4200", "http://localhost:5173", "http://127.0.0.1:4200") 
-			.setAllowedOriginPatterns("*");
-	}
-
+    
+    @Autowired
+    private OrderHandler orderHandler;
+    
+    @Override 
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(orderHandler, "/ws-order")
+            .setAllowedOrigins("http://localhost:4200", "http://localhost:5173", "http://127.0.0.1:4200");
+    }
 }
