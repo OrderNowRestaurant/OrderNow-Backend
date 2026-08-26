@@ -1,6 +1,7 @@
 package ordernow.backend.ordernow_backend.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -44,10 +45,10 @@ public class DishService {
     }
 
     public DishResponse createDish(CreateDishRequest createDishRequest) {
-        Dish dish = dishRepository.findByNameAndRestaurant_IdRestaurant(createDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
+        Optional<Dish> dish = dishRepository.findByNameAndRestaurantId(createDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
 
-        if(dish != null) {
-            throw new DuplicateResourceException("El plato " + dish.name + " existe.");
+        if(dish.isPresent()) {
+            throw new DuplicateResourceException("El plato " + dish.get().name + " existe.");
         }
 
         Dish newDish = new Dish(
@@ -67,7 +68,8 @@ public class DishService {
     }
 
     public DishResponse deleteDish(DeleteDishRequest deleteDishRequest) {        
-        Dish dish = dishRepository.findByNameAndRestaurant_IdRestaurant(deleteDishRequest.getDishName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
+        Dish dish = dishRepository.findByNameAndRestaurantId(deleteDishRequest.getDishName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant())
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró el plato: " + deleteDishRequest.getDishName()));
 
         if(dish == null) {
             throw new ResourceNotFoundException("El plato que se ha intentado eliminar no existe.");
@@ -79,11 +81,8 @@ public class DishService {
     }
 
     public DishResponse updateDish(UpdateDishRequest updateDishRequest) {
-        Dish dish = dishRepository.findByNameAndRestaurant_IdRestaurant(updateDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
-
-        if(dish == null) {
-            throw new ResourceNotFoundException("El plato que se ha intentado eliminar no existe.");
-        } 
+        Dish dish = dishRepository.findByNameAndRestaurantId(updateDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant())
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró el plato: " + updateDishRequest.getName()));
 
         dish.name = updateDishRequest.getName();
         dish.description = updateDishRequest.getDescription();

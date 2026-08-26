@@ -15,6 +15,9 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import ordernow.backend.ordernow_backend.dtos.OrderResponseDTO;
 import ordernow.backend.ordernow_backend.entities.Order;
+import ordernow.backend.ordernow_backend.entities.User;
+import ordernow.backend.ordernow_backend.repositories.UserRepository;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class OrderHandler extends TextWebSocketHandler {
@@ -22,7 +25,13 @@ public class OrderHandler extends TextWebSocketHandler {
     @Autowired
     private JwtService jwtService;
 
-    private final Map<String, List<WebSocketSession>> sessionPerUser = new ConcurrentHashMap<>();
+    @Autowired
+    private UserRepository userRepository; 
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private final Map<Long, List<WebSocketSession>> sessionsPerRestaurant = new ConcurrentHashMap<>();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -32,16 +41,23 @@ public class OrderHandler extends TextWebSocketHandler {
             try {
                 String username = jwtService.extractUsername(token);
 
-                if (username != null && !username.isEmpty()) {
-                    sessionPerUser
-                        .computeIfAbsent(username, k -> new CopyOnWriteArrayList<>())
-                        .add(session);
+                if (username != null) {
+                    User user = userRepository.findByUsername(username).orElse(null);
 
-                    session.getAttributes().put("username", username);
-                    return;
+                    if (user != null && user.getRestaurant() != null) {
+                        Long restaurantId = user.getRestaurant().getIdRestaurant();
+
+                        sessionsPerRestaurant
+                            .computeIfAbsent(restaurantId, k -> new CopyOnWriteArrayList<>())
+                            .add(session);
+
+                        session.getAttributes().put("restaurantId", restaurantId);
+                        System.out.println("WebSocket conectado con éxito para el restaurante ID: " + restaurantId);
+                        return; 
+                    }
                 }
             } catch (Exception e) {
-                System.err.println("Error al validar token en WebSocket: " + e.getMessage());
+                System.err.println("Error procesando token en WebSocket: " + e.getMessage());
             }
         }
 
@@ -50,39 +66,41 @@ public class OrderHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        String username = (String) session.getAttributes().get("username");
+        Long restaurantId = (Long) session.getAttributes().get("restaurantId");
 
-        if (username != null && sessionPerUser.containsKey(username)) {
-            sessionPerUser.get(username).remove(session);
+        if (restaurantId != null && sessionsPerRestaurant.containsKey(restaurantId)) {
+            sessionsPerRestaurant.get(restaurantId).remove(session);
         }
     }
 
-    public void notifyNewOrder(String usernameRestaurante, Order newOrder) {
-        List<WebSocketSession> sessionList = sessionPerUser.get(usernameRestaurante);
+    public void notifyNewOrder(Long restaurantId, Order newOrder) {
+        List<WebSocketSession> sessionList = sessionsPerRestaurant.get(restaurantId);
 
         if (sessionList != null && !sessionList.isEmpty()) {
-            TextMessage message = new TextMessage(OrderResponseDTO.fromEntity(newOrder).toString());
-            for (WebSocketSession session : sessionList) {
-                if (session.isOpen()) {
-                    try {
+            try {
+                String jsonMessage = objectMapper.writeValueAsString(OrderResponseDTO.fromEntity(newOrder));
+                TextMessage message = new TextMessage(jsonMessage);
+
+                for (WebSocketSession session : sessionList) {
+                    if (session.isOpen()) {
                         session.sendMessage(message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+        } else {
+            System.out.println("No hay pantallas conectadas para el restaurante ID: " + restaurantId);
         }
     }
 
     private String obtainTokenFromUrl(WebSocketSession session) {
         if (session.getUri() != null) {
             String query = session.getUri().getQuery();
-
             if (query != null && query.contains("token=")) {
                 return query.split("token=")[1].split("&")[0];
             }
-        };
-        
+        }
         return null;
     }
 }
