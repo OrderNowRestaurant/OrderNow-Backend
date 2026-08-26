@@ -52,7 +52,7 @@ public class OrderHandler extends TextWebSocketHandler {
                             .add(session);
 
                         session.getAttributes().put("restaurantId", restaurantId);
-                        System.out.println("WebSocket conectado con éxito para el restaurante ID: " + restaurantId);
+
                         return; 
                     }
                 }
@@ -90,7 +90,6 @@ public class OrderHandler extends TextWebSocketHandler {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("No hay pantallas conectadas para el restaurante ID: " + restaurantId);
         }
     }
 
