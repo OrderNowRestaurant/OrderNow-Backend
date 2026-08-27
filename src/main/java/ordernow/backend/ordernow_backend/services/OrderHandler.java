@@ -57,7 +57,6 @@ public class OrderHandler extends TextWebSocketHandler {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Error procesando token en WebSocket: " + e.getMessage());
             }
         }
 

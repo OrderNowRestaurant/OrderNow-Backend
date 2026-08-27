@@ -34,16 +34,20 @@ public class RestaurantService extends JwtService {
      * @param restaurantRequest
      * @return
      */
+    @Transactional
     public RestaurantResponse save(CreateRestaurantRequest restaurantRequest) {
-        if(checkIfUserIsAlreadyOwner(restaurantRequest) && checkIfResturantAlreadyExists(restaurantRequest.getName())) {
-            throw new DuplicateResourceException("No se ha podido crear el restaurante " + restaurantRequest.getName() + ". El restaurante ya existe o ya has creado un restaurante.");
+        if (checkIfUserIsAlreadyOwner(restaurantRequest)) {
+            throw new DuplicateResourceException("El usuario ya es propietario de otro restaurante.");
+        }
+
+        if (checkIfRestaurantAlreadyExists(restaurantRequest.getName())) {
+            throw new DuplicateResourceException("Ya existe un restaurante con el nombre '" + restaurantRequest.getName() + "'.");
         }
 
         Restaurant restaurant = restaurantRepository.save(new Restaurant(restaurantRequest.getName()));
-
         asignRestaurantToUser(restaurant);
 
-        return new RestaurantResponse(restaurant, "Se ha creado el restaurant correctamente.");
+        return new RestaurantResponse(restaurant, "Se ha creado el restaurante correctamente.");
     }
 
     /**
@@ -87,8 +91,8 @@ public class RestaurantService extends JwtService {
         );
     }
 
-    public boolean checkIfResturantAlreadyExists(String restaurantName) {
-        return this.restaurantRepository.findByName(restaurantName).get() != null;
+    public boolean checkIfRestaurantAlreadyExists(String restaurantName) {
+        return this.restaurantRepository.findByName(restaurantName).isPresent();
     }
 
     public void asignRestaurantToUser(Restaurant restaurant) {

@@ -10,6 +10,7 @@ import ordernow.backend.ordernow_backend.entities.Dish;
 import ordernow.backend.ordernow_backend.entities.Order;
 import ordernow.backend.ordernow_backend.entities.OrderItem;
 import ordernow.backend.ordernow_backend.entities.ServiceTable;
+import ordernow.backend.ordernow_backend.enums.StatusTypeEnum;
 import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.repositories.DishRepository;
 import ordernow.backend.ordernow_backend.repositories.OrderRepository;
@@ -38,6 +39,7 @@ public class OrderService {
         this.orderItemRepository = orderItemRepository;
     }
 
+    @Transactional(readOnly = true)
     public OrderResponse getAllOrders() {
         List<Order> orderList = orderRepository.findByRestaurant(authService.getAuthenticatedUser().getRestaurant());
 
@@ -57,6 +59,10 @@ public class OrderService {
 
         if (serviceTable == null) {
             throw new ResourceNotFoundException("La mesa no existe");
+        }
+
+        if (serviceTable.status == StatusTypeEnum.LIBRE || serviceTable.status == StatusTypeEnum.NO_DISPONIBLE) {
+            throw new ResourceNotFoundException("La mesa no está disponible.");
         }
 
         Order newOrder = new Order(serviceTable, serviceTable.getRestaurant());
