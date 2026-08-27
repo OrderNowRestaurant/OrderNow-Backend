@@ -101,7 +101,7 @@ public class UserService {
         RoleName roleEnum = RoleName.valueOf(createUserRequest.getRoleName().toUpperCase());
 
         User newUser = userRepository.save(new User(
-            createUserRequest.getUsername(), 
+            authService.getAuthenticatedUser().getRestaurant().getName() + "_" + createUserRequest.getUsername(), 
             passwordEncoder.encode(createUserRequest.getPassword()),
             roleRepository.findByRoleName(roleEnum),
             authService.getAuthenticatedUser().getRestaurant()

@@ -59,4 +59,11 @@ public class JwtService {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
+
+    public Long extractRestaurantId(String token) {
+        Claims claims = extractAllClaims(token);
+        Number restaurantId = claims.get("idRestaurant", Number.class);
+        
+        return restaurantId != null ? restaurantId.longValue() : null;
+    }
 }

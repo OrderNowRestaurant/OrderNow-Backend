@@ -1,14 +1,18 @@
 package ordernow.backend.ordernow_backend.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import ordernow.backend.ordernow_backend.dtos.DishByCategoryResponseDTO;
 import ordernow.backend.ordernow_backend.entities.Dish;
+import ordernow.backend.ordernow_backend.entities.ServiceTable;
 import ordernow.backend.ordernow_backend.exceptions.DuplicateResourceException;
 import ordernow.backend.ordernow_backend.exceptions.ResourceNotFoundException;
 import ordernow.backend.ordernow_backend.repositories.CategoryRepository;
 import ordernow.backend.ordernow_backend.repositories.DishRepository;
+import ordernow.backend.ordernow_backend.repositories.TableServiceRepository;
 import ordernow.backend.ordernow_backend.requests.dish.CreateDishRequest;
 import ordernow.backend.ordernow_backend.requests.dish.DeleteDishRequest;
 import ordernow.backend.ordernow_backend.requests.dish.UpdateDishRequest;
@@ -17,14 +21,16 @@ import ordernow.backend.ordernow_backend.responses.dish.DishResponse;
 @Service
 public class DishService {
 
-    private DishRepository dishRepository;
-    private AuthService authService;
-    private CategoryRepository categoryRepository;
+    private final DishRepository dishRepository;
+    private final AuthService authService;
+    private final CategoryRepository categoryRepository;
+    private final TableServiceRepository tableServiceRepository;
 
-    public DishService(DishRepository dishRepository, AuthService authService, CategoryRepository categoryRepository) {
+    public DishService(DishRepository dishRepository, AuthService authService, CategoryRepository categoryRepository, TableServiceRepository tableServiceRepository) {
         this.dishRepository = dishRepository;
         this.authService = authService;
         this.categoryRepository = categoryRepository;
+        this.tableServiceRepository = tableServiceRepository;
     }
 
 
@@ -39,10 +45,10 @@ public class DishService {
     }
 
     public DishResponse createDish(CreateDishRequest createDishRequest) {
-        Dish dish = dishRepository.findByNameAndRestaurant_IdRestaurant(createDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
+        Optional<Dish> dish = dishRepository.findByNameAndRestaurantId(createDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
 
-        if(dish != null) {
-            throw new DuplicateResourceException("El plato " + dish.name + " existe.");
+        if(dish.isPresent()) {
+            throw new DuplicateResourceException("El plato " + dish.get().name + " existe.");
         }
 
         Dish newDish = new Dish(
@@ -62,7 +68,8 @@ public class DishService {
     }
 
     public DishResponse deleteDish(DeleteDishRequest deleteDishRequest) {        
-        Dish dish = dishRepository.findByNameAndRestaurant_IdRestaurant(deleteDishRequest.getDishName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
+        Dish dish = dishRepository.findByNameAndRestaurantId(deleteDishRequest.getDishName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant())
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró el plato: " + deleteDishRequest.getDishName()));
 
         if(dish == null) {
             throw new ResourceNotFoundException("El plato que se ha intentado eliminar no existe.");
@@ -74,11 +81,8 @@ public class DishService {
     }
 
     public DishResponse updateDish(UpdateDishRequest updateDishRequest) {
-        Dish dish = dishRepository.findByNameAndRestaurant_IdRestaurant(updateDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant());
-
-        if(dish == null) {
-            throw new ResourceNotFoundException("El plato que se ha intentado eliminar no existe.");
-        } 
+        Dish dish = dishRepository.findByNameAndRestaurantId(updateDishRequest.getName(), authService.getAuthenticatedUser().getRestaurant().getIdRestaurant())
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró el plato: " + updateDishRequest.getName()));
 
         dish.name = updateDishRequest.getName();
         dish.description = updateDishRequest.getDescription();
@@ -91,5 +95,17 @@ public class DishService {
         List<Dish> dishList = List.of(dish);
 
         return new DishResponse(dishList, "Plato editado correctamente.");
+    }
+
+    public DishByCategoryResponseDTO getDishesByServiceTable(String qrToken) {
+        ServiceTable serviceTable = tableServiceRepository.findByQrToken(qrToken);
+
+        if (serviceTable == null) {
+            throw new ResourceNotFoundException("El QR que ha leído no es correcto o la mesa no está disponible.");
+        }
+
+        List<Dish> dishList = dishRepository.findByRestaurant(serviceTable.getRestaurant());
+
+        return DishByCategoryResponseDTO.fromEntity(dishList);
     }
 }

@@ -27,7 +27,7 @@ public class AuthService extends JwtService{
 
      /**
      * Gets the username, no matter if it is a instance of UserDetail or Principal
-     * @return
+     * @return String
      */
     public String getUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();

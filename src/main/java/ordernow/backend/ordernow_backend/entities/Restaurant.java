@@ -9,7 +9,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -28,8 +27,7 @@ public class Restaurant {
     @Column(name = "created_at")
     public LocalDateTime created_at;
 
-    @OneToMany
-    @JoinColumn(name = "id_service_table")
+    @OneToMany(mappedBy = "restaurant")
     public Collection<ServiceTable> serviceTableList;
 
     @OneToMany(mappedBy = "restaurant") 

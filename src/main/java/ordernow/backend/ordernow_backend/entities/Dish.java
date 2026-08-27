@@ -57,4 +57,20 @@ public class Dish {
     public Dish() {
         
     }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public float getPrice() {
+        return price;
+    }
+    
+    public int getTime() {
+        return time;
+    }
 }

@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,6 +45,7 @@ public class ServiceTable {
 
     @ManyToOne
     @JoinColumn(name = "id_restaurant")
+    @JsonIgnore
     private Restaurant restaurant;
 
     public ServiceTable(String name, Restaurant restaurant) {
@@ -76,5 +79,13 @@ public class ServiceTable {
 
     public Long getIdServiceTable() {
         return idServiceTable;
+    }
+
+    public Restaurant getRestaurant() {
+        return restaurant;
+    }
+
+    public String getName() {
+        return name;
     }
 }
