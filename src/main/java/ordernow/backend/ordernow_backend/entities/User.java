@@ -38,7 +38,7 @@ public class User implements UserDetails {
     public LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id")
+    @JoinColumn(name = "id_role")
     private Role role;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
