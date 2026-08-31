@@ -21,7 +21,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
     
     @Override 
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        String[] origins = allowedOrigins.split("\\s*,\\s*");
+
         registry.addHandler(orderHandler, "/ws-order")
-            .setAllowedOrigins(allowedOrigins.split("\\s*,\\s*"));
+            .setAllowedOrigins((origins));
     }
 }
